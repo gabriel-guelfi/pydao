@@ -133,9 +133,124 @@ GetDao('table_name', customConnection).find()
 
 ---
 
+## Filtering ##
+Of course you don't want to delete all users on your table, right?!, So we need to filter the operations, in order to affect only the rows we want.
+
+The filtering using **PyDao** is made by the use of pairs of methods, which defines what you want to filter and the comparison you want to make in it.
+
+For example, as you don't want to delete all the users in your table, you want to filter the deletion by user's ID:
+
+```python
+from pydao.mysql import GetDao
+
+numDeletedUsers = GetDao('users')\
+  .filter('id').equalsTo(12)
+  .delete()
+```
+The code above will delete the row in the table "users", in which the column "id" is equals to 12. Simple Enough?!
+
+### Stacking multiple filters ###
+And if you want to filter your operation using more than one condition? 
+
+You can stack filters, indicating the logical operator to be used in the joining of the filters.
+
+For example, imagine that now you want to select, from the database, all the male users who are minors:
+
+```python
+from pydao.mysql import GetDao
+
+minorUsers = GetDao('users')\
+  .filter('age').lessThanOrEqualsTo(18)
+  ._and('sex').equalsTo('male')
+  .find()
+```
+The code above will retrieve a list of dictionaries, each containing a row in the table "users", in which the column "age" is less than or equals to 18 **and** the column "sex" is equals to "male".
+
+### All available filtering methods ##
+You can use these filtering pair of methods in all of the CRUD operations. Here's a list of all available filtering methods:
+
+* **Filter and logical operator methods**: 
+  * `filter()`: defines the first thing to be filtered
+  * `_and()`: stacks a filter to the operation, using the logical operator "and"
+  * `_or()`: stacks a filter to the operation, using the logical operator "or"
+
+* **Comparison operator methods**: 
+  * `equalsTo()`: sets the value to be compared as "equals to (=)"
+  * `notEqualsTo()`: sets the value to be compared as "not equals to (!=)"
+  * `biggerThan()`: sets the value to be compared as "bigger than (>)"
+  * `lessThan()`: sets the value to be compared as "less than (<)"
+  * `biggerOrEqualsTo()`: sets the value to be compared as "bigger or equals to (>=)"
+  * `lessOrEqualsTo()`: sets the value to be compared as "less or equals to (<=)"
+  * `like()`: sets the value to be compared as "like (LIKE)"
+  * `_in()`: sets the value to be compared as "in (IN)". In this case, the value to be compared is a list, instead of a single value.
+  * `_notIn()`: sets the value to be compared as "not in (NOT IN)". In this case, the value to be compared is a list, instead of a single value.
+
 ---
 
-### Authors ###
+## Get Further ##
+Ok, this far we already can make all the basic CRUD operations, filtering in any way we want, but what about retrieving data with joins, unions, subqueries, ordering, paginating, etc.?
+
+### Write complex queries ###
+The method `find()` accepts, as its first argument, a SQL string to be executed against the database, so if you need to make a specific alien search on the database, full of `JOIN`, `ORDER BY`, `GROUP BY`, subqueries, etc., you can write the query and pass it directly to the `find()` method and use the same filtering mechanics to put data safely into your query:
+
+```python
+from pydao.mysql import GetDao
+
+result = GetDao('table_1')\
+  .filter('filterValue1').equalsTo("something")
+  ._and('filterValue2').like("other something")
+  .find(
+    """
+    SELECT tb1.column1 FROM `table_1` tb1
+    LEFT JOIN `table_2` tb2 ON (tb2.id = tb1.id_table_2)
+    WHERE tb1.some_column = %(filterValue1)s
+    AND tb2.other_column = %(filterValue2)s
+    ORDER BY tb1.id ASC
+  """
+  )
+```
+The code above executes the provided SQL query against the database, replacing safely the *filter placeholders* in the query by the provided values, then stores a list with the results in the variable `result`
+
+### Debugging your queries ###
+All the operations receive an argument for debugging, which is a boolean flag, that, when turned on, instead of executing the query against the database, returns a dictionary containing the resulting SQL and all the filters applied to it:
+
+```python
+from pydao.mysql import GetDao
+
+queryInfo = GetDao('table_name').filter('some_column').equalsTo(123).find('', True)
+```
+The `queryInfo` variable in the code above holds the following:
+```python
+{'SQL':'SELECT * FROM `table_name` WHERE some_column = %(param_some_column)s', 'Params': {'param_some_column': 123}}
+```
+
+### Only one row or nothing at all ###
+What if you're writing a function which shall return, not a list, but a single row, and if no results were found in the database it shall return `None`?
+
+You can make use of the method: `first()`, which is pretty much alike the `find()` method, but instead of returning a list, returns a single dictionary, containing the first row found in the results or `None` in case of no results are found (`find()` would return an empty list in this case):
+```python
+from pydao.mysql import GetDao
+
+singleRow = GetDao('users')\
+  .filter('id').equalsTo(12)\
+  .first()
+```
+
+---
+
+## That's all folks! ##
+I hope you enjoy this tool and I wish it can help you! Feel free to ask any questions.
+
+If you're a senior developer, full of critiques, like myself: I know that there's lots of things that can be added and improved on this and the source is lacking commentaries, but I had only 4 days to work on this tool, so take it easy, for now, it's a puppy! xD
+
+By the way, it's open source, so if you're feeling creative, put your code where your mouth is and help me build this up!
+
+Thank y´ all!
+
+
+---
+
+## Authors ##
 * Gabriel Valentoni Guelfi(first author and founder)
   > Email: gabriel.valguelfi@gmail.com
 
@@ -143,7 +258,7 @@ GetDao('table_name', customConnection).find()
 
 ---
 
-### Acknowledgments ###
+## Acknowledgments ##
 * [João Paulo Varandas](https://www.linkedin.com/in/joaovarandas/), my former boss and the author of **[inPaaS](https://www.inpaas.com/)**, a Low-code platform written in Java. Much of the coding interface of **PyDao** is similar to **inPaaS**. Thank you for the huge amount of knowledge.
 * [João Ricardo Escribano](https://www.linkedin.com/in/joaoescribano/) my friend and another technology monster who taught me and encouraged me much. Thank you for your patience and for have showed me the world of software engineering.
 * [Thiago Valentoni Guelfi](https://www.linkedin.com/in/thiago-valentoni-guelfi-198a4174/) my brother who began much earlier than myself and opened up the software engineering door in my household
