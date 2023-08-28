@@ -65,7 +65,7 @@ class SqlBuilder:
         if isinstance(data, dict):
             keys = list(data.keys())
         elif isinstance(data, list):
-            keys = data[0].keys()
+            keys = list(data[0].keys())
 
         values = []
         for key in keys:
