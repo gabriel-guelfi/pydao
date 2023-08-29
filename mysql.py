@@ -65,7 +65,7 @@ class SqlBuilder:
         if isinstance(data, dict):
             keys = list(data.keys())
         elif isinstance(data, list):
-            keys = data[0].keys()
+            keys = list(data[0].keys())
 
         values = []
         for key in keys:
@@ -119,7 +119,15 @@ class SqlBuilder:
 
                 value = f"({','.join(joinedValues)})"
 
-            else: value = f" %({paramAlias})s" if condition['value'] is not None else ''
+                if len(condition['value']) < 1: 
+                    value = '1'
+                    paramName = ''
+                    paramAlias = ''
+                    logicalOperator = ''
+                    comparisonOperator = ''
+
+            else: 
+                value = f" %({paramAlias})s" if condition['value'] is not None else ''
 
             # Set logical operator:
             if not logicalOperator == None:
