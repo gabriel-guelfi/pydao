@@ -13,7 +13,7 @@ class Cnn:
             database=database
         )
 
-    def disconnect(self):
+    def __del__(self):
         self.cnn.close()
 
     def create(self, sql: str, data):
@@ -171,7 +171,6 @@ class GetDao:
             self.persistence[queryHash] = self.cnn.read(sql, self.prepareParams(userDefinedParams), onlyFirstRow)
 
         result = self.persistence[queryHash]
-        self.cnn.disconnect()
         return result
     
     def first(self, sql: str = '', debug = False):
@@ -196,7 +195,6 @@ class GetDao:
                 obj[tbKeyName] = lastId
                 lastId = lastId + 1
 
-        self.cnn.disconnect()
         return data
     
     def update(self, data: dict, debug = False):
@@ -212,7 +210,6 @@ class GetDao:
             return {'SQL':sql, 'Params': mysqlParams}
 
         affectedRows = self.cnn.update(sql, mysqlParams)
-        self.cnn.disconnect()
         return affectedRows
 
     def delete(self, debug = False):
@@ -225,7 +222,6 @@ class GetDao:
         if debug: return {'SQL':sql, 'Params': self.prepareParams()}
 
         affectedRows = self.cnn.delete(sql, self.prepareParams())
-        self.cnn.disconnect()
         return affectedRows
 
     def filter(self, paramName: str):
